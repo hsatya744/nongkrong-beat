@@ -13,14 +13,8 @@ const client = new Client({
     ],
 });
 
-// 2. Inisialisasi Discord Player dengan Optimasi Buffer Cloud (Anti-Lag)
-const player = new Player(client, {
-    ytdlOptions: {
-        quality: 'highestaudio',
-        highWaterMark: 1 << 25, // Buffer besar (~33MB) agar stabil di cloud
-        filter: 'audioonly'
-    }
-});
+// 2. Inisialisasi Discord Player
+const player = new Player(client);
 
 // Memuat extractor bawaan secara aman
 async function initPlayer() {
@@ -46,6 +40,9 @@ client.once('ready', () => {
 
 // 3. Event Listener untuk Perintah Teks
 client.on('messageCreate', async (message) => {
+    // Tambahkan log untuk memastikan pesan terbaca
+    console.log(`[PESAN MASUK] ${message.author.tag}: ${message.content}`);
+
     if (message.author.bot || !message.guild) return;
 
     const prefix = '!';
@@ -70,15 +67,16 @@ client.on('messageCreate', async (message) => {
         }
 
         try {
-            // Memutar lagu dengan nodeOptions yang disesuaikan untuk kestabilan cloud
+            // Memutar lagu dengan opsi pemutaran awal (settingan kode pertama)
             const { track } = await player.play(channel, query, {
                 nodeOptions: {
                     metadata: message,
                     leaveOnEnd: false,
                     leaveOnEmpty: true,
                     leaveOnEmptyCooldown: 30000,   // 30 detik
-                    bufferingTimeout: 3000,        // Waktu tunggu buffer agar stabil
-                    connectionTimeout: 20000,      // Timeout koneksi 20 detik
+                    bufferingTimeout: 0,           // 0ms agar langsung memutar stream audio instan
+                    connectionTimeout: 10000,      // Timeout koneksi 10 detik
+                    skipFFmpeg: true               // Melewati konversi audio berat agar pemutaran jauh lebih cepat
                 }
             });
 
